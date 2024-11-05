@@ -3,20 +3,23 @@ import json
 import socket
 import threading
 import sqlite3
-import databaseSend as db
+import database as db
 from datetime import datetime, timedelta
 import smtplib
 import io
 
+# Connect to SQLite3 database 'Boutique.db' but make sure to run the database.py file before inorder to create the database if it the first time you run
 conn = sqlite3.connect('Boutique.db', check_same_thread=False)
 cursor = conn.cursor()
 db_lock = threading.Lock()
 
+# server host and port to listen to incoming client connections
 HOST = '127.0.0.1'
 PORT = 12345
 #dictionary to keep track of online users when they login and then remover from dictionary when logout
 online_users = {}
-#function to send email for buyer to confirm his/her purchase
+
+#function to send email for buyer to confirm his/her purchase using smtp protocol
 def send_email(recipient, productList, pickup_info):
     smtp_server = 'smtp.gmail.com'
     smtp_port = 587
@@ -67,60 +70,60 @@ def handle_client(client_socket, addr):
 
     try:
         while True:
-            request = client_socket.recv(1024).decode('utf-8')
+            request = client_socket.recv(1024).decode('utf-8') # Receive request from the client
             if not request:
                 break
 
             try:
-                data = json.loads(request)
+                data = json.loads(request) #parse JSON data from the client request
             except json.JSONDecodeError:
                 response = json.dumps({"error": "Invalid JSON format."})
                 client_socket.send(response.encode('utf-8'))
                 continue
 
-            command = data.get("action")
-
+            command = data.get("action") # extract the action specified in the request in order to know what to proceed with
+             # Command to register a new user account by getting new: name, email, username, password from the client's request
             if command == "REGISTER":
                 response = register_user(data.get("name"), data.get("email"), data.get("username"), data.get("password"))
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+             # Command to log in an existing user, updating online status if successful
             elif command == "LOGIN":
                 response, authenticated_user = login_user(data.get("username"), data.get("password"))
                 if authenticated_user:
                     online_users[authenticated_user[0]] = client_socket
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            # Command to view conversation history with another user
             elif command == "VIEW_CONVERSATION" and authenticated_user:
                 response = view_conversation(authenticated_user[0], data.get("other_username"))
                 client_socket.send(json.dumps(response).encode('utf-8'))
 
-
+             # Command to view all messages received by the authenticated user from other users
             elif command == "VIEW_ALL_MESSAGES_RECEIVED" and authenticated_user:
                 response = view_all_messages_received(authenticated_user[0])  
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            # Command to purchase a product by getting the product ID inputed by the client
             elif command == "PURCHASE" and authenticated_user:
                 product_id = data.get("product_id")
                 response = purchase_product(authenticated_user[0], product_id)
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            # Command to send a message to another user ( regardless if online or offline the other user is)
             elif command == "SEND_MESSAGE" and authenticated_user:
                 response = send_message(authenticated_user[0], data.get("receiver_username"), data.get("message_content"))
                 client_socket.send(json.dumps(response).encode('utf-8'))
-                
+            # Command to send a message to another user ( only if the other user is online) 
             elif command == "SEND_MESSAGE_ONLINE" and authenticated_user:
                 response = send_message_online(authenticated_user[0], data.get("receiver_username"), data.get("message_content"))
                 client_socket.send(json.dumps(response).encode('utf-8'))
 
-
+            # Command to add a new product listing to the marketplace
             elif command == "ADD_PRODUCT" and authenticated_user:
                 response = add_product(authenticated_user[0], data.get("product_name"), data.get("description"), data.get("price"), data.get("image_path"))
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            # Command to view all products listed by other sellers
             elif command == "VIEW_ALL_PRODUCTS" and authenticated_user:
                 response = view_products(authenticated_user[0])
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            # Command to search for products listed by a specific seller
             elif command == "SEARCH_PRODUCTS_BY_SELLER" and authenticated_user:
                 response = search_products_by_seller(data.get("seller_username"))
                 client_socket.send(json.dumps(response).encode('utf-8'))
@@ -596,7 +599,7 @@ def view_all_messages_received(user_id):
 
     return {"message": "Messages found", "results": results}
 
-
+# Cancel a product listing by setting its status to 'Cancelled'
 def cancel_listing(user_id, product_id):
     cursor.execute("SELECT user_id FROM Products WHERE product_id = ?", (product_id,))
     result = cursor.fetchone()
