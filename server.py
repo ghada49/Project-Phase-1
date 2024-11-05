@@ -14,9 +14,9 @@ db_lock = threading.Lock()
 
 HOST = '127.0.0.1'
 PORT = 12345
-
+#dictionary to keep track of online users when they login and then remover from dictionary when logout
 online_users = {}
-
+#function to send email for buyer to confirm his/her purchase
 def send_email(recipient, productList, pickup_info):
     smtp_server = 'smtp.gmail.com'
     smtp_port = 587
