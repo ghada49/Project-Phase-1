@@ -13,23 +13,24 @@ client_socket.connect((HOST, PORT))
 authenticated = False
 current_user = None
 
-
+#send_request take the data and transform it into json data. Then we receive a response from the server and transform it again
 def send_request(data):
-    json_data = json.dumps(data)
-    client_socket.sendall(json_data.encode('utf-8'))
-    response = client_socket.recv(4096).decode('utf-8')
+    json_data = json.dumps(data) # convert our data to json
+    client_socket.sendall(json_data.encode('utf-8')) # we send the data to the client
+    response = client_socket.recv(4096).decode('utf-8') # we receive our response from the server 
     
     try:
-        response_data = json.loads(response)
+        response_data = json.loads(response) # we transform it again to return the data in our program
         return response_data
     except json.JSONDecodeError:
         print("Failed to decode JSON response from server.")
         return {}
 
-
+# the user write name, email, username, password as inputs and we store it in a dictionnary with the action (which is register) and the fields
+# note the "action" field is important here, when we are sending our request to our server, the server will first check what "action" we are doing
 def register():
     print("\n--- Registration ---")
-    name = input("Enter your name: ")
+    name = input("Enter your name: ") # as I said, we input the fields required
     email = input("Enter your email: ")
     username = input("Enter a new username: ")
     password = input("Enter a new password: ")
@@ -42,20 +43,20 @@ def register():
             "username": username,
             "password": password
         
-    }
+    } # we store the data 
     
-    response = send_request(command)
-    if response.get("message"):
+    response = send_request(command) # we send the request using json
+    if response.get("message"): # we receive the message 
         print(response["message"])
 
-
+#login takes as inputs the username and password and send the data to the server which will check if these credentials are in the database and if it is correct
 def login():
     global authenticated, current_user
     print("\n--- Login ---")
-    username = input("Enter your username: ")
+    username = input("Enter your username: ") # user input
     password = input("Enter your password: ")
 
-    command = {
+    command = { # we store the data
         "action": "LOGIN",
         
             "username": username,
@@ -63,50 +64,50 @@ def login():
         
     }
 
-    response = send_request(command)
+    response = send_request(command) # we send the request, herethe server will see that the action is "login"
 
-    if "Login successful" in response.get("message"):
+    if "Login successful" in response.get("message"): # remember that in the server code, we send responses in this format: return {message : something} (e.g it could be {"messages": "request completed"} or "not completed") so we check what message we received and according to that the client will tell the user if his request was completed or not and so on so forth
         authenticated = True
-        current_user = username
+        current_user = username  # we store the username here for later use 
         print(response.get("message"))
         print("Welcome back!\nList of available prodcuts below: \n")
-        command2 = {"action": "VIEW_ALL_PRODUCTS"}
-        response2 =send_request(command2)
+        command2 = {"action": "VIEW_ALL_PRODUCTS"} # we want to show the products after login 
+        response2 =send_request(command2) # we send the request
         if "No available products" in response2.get("message"):
             print(response2.get("message"))
         else:
             products= response2.get("products")
             headers = products[0].keys()
-            print(tabulate(products, headers="keys", tablefmt="grid"))
+            print(tabulate(products, headers="keys", tablefmt="grid")) # remember that we stored our information in results matrix and now we it will be represented in tabular form
     else:
         print("\nLogin failed. Please try again.\n")
 
-
+# adding products takes from the user input : the name, description, image path and the data is sent to the server who will add all of this information into the products database
 def add_product():
     print("\n--- Add Product ---")
     product_name = input("Enter product name: ")
     while True:
         description = input("Enter product description (max 20 characters): ")
-        if len(description) > 20:
+        if len(description) > 20: # we decided to make the description short but it could be adjusted 
             print("You exceeded the description character limit (20)")
         else:
             break
     price = input("Enter product price: ")
     image_path = input("Enter image file path (leave blank if none): ").strip()
 
-    command = {
+    command = { # we store the data in command
         "action": "ADD_PRODUCT",
             "product_name": product_name,
             "description": description,
             "price": price,
-            "image_path": image_path if image_path else None
+            "image_path": image_path if image_path else None # image path is set to None if the user has not entered anything
         
     }
     
-    response = send_request(command)
-    print(response.get("message"))
+    response = send_request(command) #we send the request
+    print(response.get("message")) # we get the answer
 
-
+# for view products, we have two choice, either to see all products from all sellers OR to see products from one seller 
 def view_products():
     print("\n--- View Products ---")
     print("1. View Available Products")
@@ -115,7 +116,7 @@ def view_products():
     choice = input("Enter your choice (1 or 2): ")
 
     if choice == "1":
-        command = {"action": "VIEW_ALL_PRODUCTS"}
+        command = {"action": "VIEW_ALL_PRODUCTS"} # so here we make the request and the server will fetch all the products
         response =send_request(command)
         if "No available products" in response.get("message"):
             print(response.get("message"))
@@ -125,7 +126,7 @@ def view_products():
             print(tabulate(products, headers="keys", tablefmt="grid"))
 
     elif choice == "2":
-        seller_username = input("Enter the seller's username: ")
+        seller_username = input("Enter the seller's username: ") # if he wants to see from a specific seller, he should enter the username and the server will fetch the infos accordingly
         command = {
             "action": "SEARCH_PRODUCTS_BY_SELLER",
             "seller_username": seller_username
@@ -141,29 +142,31 @@ def view_products():
     else:
         print("Invalid choice. Returning to main menu.")
 
-
+# purchase product runs with a while loop that will prompt at each time the user to enter the product ID to purchase and it will stop when the user writes "done"
 def purchase_product():
     print("\n--- Purchase Product ---")
-    product_ids = []
+    product_ids = [] # we will put here the ID's of the products to buy
     
-    while True:
-        product_id = input("Enter product ID to purchase (or type 'done' when finished): ")
+    while True: # so we select all the products in one pass
+        product_id = input("Enter product ID to purchase (or type 'done' when finished): ") # continuisly we add the product ID
         if product_id.lower() == 'done':
             break
-        product_ids.append(product_id)
+        product_ids.append(product_id) # here we append to a list all the products ID 
     
     command = {
         "action": "PURCHASE",
-        "product_id": product_ids
+        "product_id": product_ids # we send the list with the product IDS and the server from his side will loop over each product ID and do the necessary changes in the databases
     }
     response = send_request(command)
     print(response.get("message"))
 
 
-
+# to send a message to another user, the user will have to enter username of this other user and the content
+# the user can choose to send the message only if the user is online or to send the message regardless if his online or not
+# note this a preference of the user (this could be simulated to a situation where the customer wants a direct answer (so he wants to user to be online) or don't mind to have an answer later on
 def send_message():
     print("\n--- Send Message ---")
-    print("1. Only if receiver is online")
+    print("1. Only if receiver is online") 
     print("2. Regardless if online or offline")
 
     choice = input("Enter your choice (1 or 2): ")
@@ -171,7 +174,7 @@ def send_message():
     message_content = input("Enter your message: ")
     if choice == "2":
         command = {
-            "action": "SEND_MESSAGE",
+            "action": "SEND_MESSAGE", # two different requests
             
                 "receiver_username": receiver_username,
                 "message_content": message_content
@@ -179,7 +182,7 @@ def send_message():
         }
     else:
         command = {
-            "action": "SEND_MESSAGE_ONLINE",
+            "action": "SEND_MESSAGE_ONLINE", # two different requests
             
                 "receiver_username": receiver_username,
                 "message_content": message_content
@@ -190,26 +193,26 @@ def send_message():
     print(send_request(command).get("message"))
 
 
-
+# to view the conversations with another user, the user have to input username of this other person
 def view_conversations():
     print("\n--- View Conversations ---")
-    other_username = input("Enter the username of the person to view conversations: ")
+    other_username = input("Enter the username of the person to view conversations: ") # so here is the input which has the username of the other person
 
     command = {
         "action": "VIEW_CONVERSATION",
         "other_username": other_username
-    }
+    } 
 
-    response = send_request(command)
+    response = send_request(command) #send request to server who will fetch the infos in the database in the Messages table
     if "No messages found." in response.get("message"):
         print(response.get("message")) 
     else:
         msg= response.get("results")
         headers = msg[0].keys()
-        print(tabulate(msg, headers="keys", tablefmt="grid"))
+        print(tabulate(msg, headers="keys", tablefmt="grid")) #tabulate form representation
 
 
-
+#view all messages received : note here, we do not take any input. We have the username of the current user and we send it to the server and the server will fetch in the database and will check messages send to the suer (who is the receiver)
 def view_all_messages_received():
     print("\n--- View All Messages Received ---")
     
@@ -218,7 +221,7 @@ def view_all_messages_received():
     command = {
         "action": "VIEW_ALL_MESSAGES_RECEIVED",
         "user_id": user_id
-    }
+    } #send request
 
     response = send_request(command)
     if "No messages found." in response.get("message"):
@@ -229,10 +232,10 @@ def view_all_messages_received():
         print(tabulate(msg, headers="keys", tablefmt="grid"))
 
 
-
+# view users will show all the user of AUBoutique
 def view_users():
     print("\n--- Users List ---")
-    command = {"action": "VIEW_USERS"}
+    command = {"action": "VIEW_USERS"} # request to view users
     response= send_request(command)
     if "No users found." in response.get("message"):
         print(response.get("message"))
@@ -242,31 +245,31 @@ def view_users():
         print(tabulate(users, headers="keys", tablefmt="grid"))
         
 
-
+#transactions show all products bought or sold by the user
 def view_transactions():
     print("\n--- View Transactions ---")
     command = {"action": "VIEW_TRANSACTIONS"}
     response = send_request(command)
-    if "No products sold." in response.get("sold_message"):
-        print("No products sold yet.")
+    if "No products sold." in response.get("sold_message"): # we check if there are products sold or not 
+        print("No products sold yet.") 
     else:
         print("Products sold\n")
         sold_transactions = response.get("sold_transactions")
         headers = sold_transactions[0].keys()
-        print(tabulate(sold_transactions, headers="keys", tablefmt="grid"))
-    if "No products bought" in response.get("bought_message"):
+        print(tabulate(sold_transactions, headers="keys", tablefmt="grid")) # print table if there is
+    if "No products bought" in response.get("bought_message"): # same here but for products bought
         print("No products bought yet.")
     else:
         print("Products bought\n")
         bought_transactions = response.get("bought_transactions")
         headers = bought_transactions[0].keys()
-        print(tabulate(bought_transactions, headers="keys", tablefmt="grid"))    
+        print(tabulate(bought_transactions, headers="keys", tablefmt="grid"))  # print table if there is  
 
-
+# view listings helps to see the status of products added by the user
 def view_my_listings():
     print("\n--- My Listings ---")
     command = {"action": "VIEW_MY_LISTINGS"}
-    response = send_request(command)
+    response = send_request(command) # send request
     if "You have no listings" in response.get("message"):
         print(response.get("message"))
     else:
@@ -274,45 +277,46 @@ def view_my_listings():
         headers = products[0].keys()
         print(tabulate(products, headers="keys", tablefmt="grid"))
 
-
+#view image : the user write the ID of the products he want to see and the client will act according to the response of the server
 def view_product_image():
     print("\n--- View Product Image ---")
-    product_id = input("Enter the product ID to view its image: ")
-    command = {"action": "VIEW_IMAGE", "product_id": product_id}
+    product_id = input("Enter the product ID to view its image: ") # so the user gives the product id 
+    command = {"action": "VIEW_IMAGE", "product_id": product_id} # here, when the server receives, it fetch in the products table and if it finds the image path, it will send data to the client and the client will be able to open the photo
     response = send_request(command)
-    if "Data sent" in response.get("message"):
-        image_size_data = client_socket.recv(4)
+    if "Data sent" in response.get("message"): # so we check if the message tells us that the data is sent
+        image_size_data = client_socket.recv(4) # we receive the data
         image_size = int.from_bytes(image_size_data, 'big')
 
         image_data = b""
-        while len(image_data) < image_size:
+        while len(image_data) < image_size: # we get the data 
             chunk = client_socket.recv(4096)
             if not chunk:
                 break
             image_data += chunk
 
-        image = Image.open(io.BytesIO(image_data))
+        image = Image.open(io.BytesIO(image_data)) # we open the image thanks to the data we received
         image.show()
         print("Image for product ", product_id)
     else:
         print("No image found for this product.")
     
-
+# to cancel a listing, the user provides the ID of the product and the server will fetch in the product table and will remove it
 def cancel_listing():
     print("\n--- Cancel a Listing ---")
-    product_id = input("Enter the product ID you want to cancel: ")
+    product_id = input("Enter the product ID you want to cancel: ") # id input 
 
     command = {
         "action": "CANCEL_LISTING",
         "product_id": product_id
     }
 
-    print(send_request(command).get("message"))
+    print(send_request(command).get("message")) # send request
 
 
 print("\nWelcome to AUBoutique Platform!\n")
 authenticated = False
 
+# so here we give the users the option to first register, login, exit. Then when they login, we give them the other options.
 while True:
     if not authenticated:
         print("\nOptions:")
@@ -331,7 +335,7 @@ while True:
             break
         else:
             print("Invalid choice. Please try again.")
-    if authenticated:
+    if authenticated: # if he has loged in
         print(f"\n{current_user} - Options (Pick a number 1-12):")
         print("1. Add Product")
         print("2. View Products")
