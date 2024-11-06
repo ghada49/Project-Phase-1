@@ -26,11 +26,11 @@ def send_request(data):
         print("Failed to decode JSON response from server.")
         return {}
 
-# the user write name, email, username, password as inputs and we store it in a dictionnary with the action (which is register) and the fields
+# the user inputs name, email, username, password and we store it in a dictionary with the action (which is register) and the fields
 # note the "action" field is important here, when we are sending our request to our server, the server will first check what "action" we are doing
 def register():
     print("\n--- Registration ---")
-    name = input("Enter your name: ") # as I said, we input the fields required
+    name = input("Enter your name: ") # input the fields required
     email = input("Enter your email: ")
     username = input("Enter a new username: ")
     password = input("Enter a new password: ")
@@ -43,9 +43,9 @@ def register():
             "username": username,
             "password": password
         
-    } # we store the data 
+    } # we store the data
     
-    response = send_request(command) # we send the request using json
+    response = send_request(command) # we send the request using json using the fuction send_request
     if response.get("message"): # we receive the message 
         print(response["message"])
 
@@ -64,7 +64,7 @@ def login():
         
     }
 
-    response = send_request(command) # we send the request, herethe server will see that the action is "login"
+    response = send_request(command) # we send the request, here the server will see that the action is "login"
 
     if "Login successful" in response.get("message"): # remember that in the server code, we send responses in this format: return {message : something} (e.g it could be {"messages": "request completed"} or "not completed") so we check what message we received and according to that the client will tell the user if his request was completed or not and so on so forth
         authenticated = True # we keep track of it for later use (in the while loop which shows the different option) --> the user can view products, add products and all these action only if he is logged in so that's why we keep track of it
@@ -78,7 +78,7 @@ def login():
         else:
             products= response2.get("products")
             headers = products[0].keys()
-            print(tabulate(products, headers="keys", tablefmt="grid")) # remember that we stored our information in results matrix and now we it will be represented in tabular form
+            print(tabulate(products, headers="keys", tablefmt="grid")) # remember that we stored our information in results matrix and now we it will be represented in tabular form to the user
     else:
         print("\nLogin failed. Please try again.\n")
 
@@ -93,7 +93,7 @@ def add_product():
         else:
             break
     price = input("Enter product price: ")
-    image_path = input("Enter image file path (leave blank if none): ").strip()
+    image_path = input("Enter image file path (leave blank if none): ").strip() #the seller has the option to add an image or not
 
     command = { # we store the data in command
         "action": "ADD_PRODUCT",
@@ -104,10 +104,10 @@ def add_product():
         
     }
     
-    response = send_request(command) #we send the request
-    print(response.get("message")) # we get the answer
+    response = send_request(command) #we send the request and get the response back from the server
+    print(response.get("message")) 
 
-# for view products, we have two choice, either to see all products from all sellers OR to see products from one seller 
+# for view products, we have two choice, either to see all products from all sellers OR to see products from specific seller 
 def view_products():
     print("\n--- View Products ---")
     print("1. View Available Products")
@@ -213,6 +213,7 @@ def view_conversations():
 
 
 #view all messages received : note here, we do not take any input. We have the username of the current user and we send it to the server and the server will fetch in the database and will check messages send to the suer (who is the receiver)
+#this function lets the user check if he has recieved any messages (like if he has new notifications in order to reply to them accordingly)
 def view_all_messages_received():
     print("\n--- View All Messages Received ---")
     
@@ -232,7 +233,8 @@ def view_all_messages_received():
         print(tabulate(msg, headers="keys", tablefmt="grid"))
 
 
-# view users will show all the user of AUBoutique
+# view users will show all the users of AUBoutique
+# It's purpose is to allow the users to check the online/offline status of other users (if they want to send a message for example)
 def view_users():
     print("\n--- Users List ---")
     command = {"action": "VIEW_USERS"} # request to view users
@@ -284,17 +286,17 @@ def view_product_image():
     command = {"action": "VIEW_IMAGE", "product_id": product_id} # here, when the server receives, it fetch in the products table and if it finds the image path, it will send data to the client and the client will be able to open the photo
     response = send_request(command)
     if "Data sent" in response.get("message"): # so we check if the message tells us that the data is sent
-        image_size_data = client_socket.recv(4) # we receive the data
+        image_size_data = client_socket.recv(4) # we receive the zise of image
         image_size = int.from_bytes(image_size_data, 'big')
 
         image_data = b""
-        while len(image_data) < image_size: # we get the data 
+        while len(image_data) < image_size: # we receive the data in chuncks as the size of image is usually large
             chunk = client_socket.recv(4096)
             if not chunk:
                 break
             image_data += chunk
 
-        image = Image.open(io.BytesIO(image_data)) # we open the image thanks to the data we received
+        image = Image.open(io.BytesIO(image_data)) 
         image.show()
         print("Image for product ", product_id)
     else:
@@ -335,7 +337,7 @@ while True:
             break
         else:
             print("Invalid choice. Please try again.")
-    if authenticated: # if he has loged in, we give the other options
+    if authenticated: # if he has logged in, we give the other options (meaning that he is authenticated now)
         print(f"\n{current_user} - Options (Pick a number 1-12):")
         print("1. Add Product")
         print("2. View Products")
@@ -351,7 +353,7 @@ while True:
         print("12. Logout")
 
         choice = input("Enter your choice: ")
-        # for each choice, we callt the function of the client side and then the user will be prompted to give inputs and so on so forth (more detailed above)
+        # for each choice, we call the function of the client side and then the user will be prompted to give inputs and so on so forth (more detailed above)
         if choice == "1":
             add_product()
         elif choice == "2":
