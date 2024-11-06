@@ -234,6 +234,7 @@ def add_product(user_id, product_name, description, price, image_path=None):
     conn.commit()
     return {"message": "Product added successfully."}
 
+# The view_products function shows all the products available 
 def view_products(user_id):
     cursor.execute("""
         SELECT 
