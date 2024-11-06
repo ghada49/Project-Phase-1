@@ -213,7 +213,10 @@ def login_user(username, password):
         ) # we set the user status to "Online" corresponding to the username of the user. Note that this is for the messaging option (we keep track of who is online and who is not when messaging)
         conn.commit()
         return {"message": "Login successful. Welcome to AUBoutique!"}, user
-    return {"message": "Invalid credentials."}, None # we print an error if the credentials are wrong
+    return {"message": "Invalid credentials."}, None # we will send a message saying credentials are wrong
+# Note :
+# in the server code, we send responses in this format: return {message : something}; when the client receive the message he will check the content at accordingly he will print, or prompt the user and so on so forth
+# for example here : for invalid credentials: it will print it and the user will have to login again, so here it check what is the content of message and will act accordingly
 
 
 # The add_product() function takes the inputs (product name, description, price and image path) of the user from the client side and then add them into the database to create a new product. The username of the one who added the product will be added as well.
@@ -269,7 +272,7 @@ def view_products(user_id):
             "status": product[4],
             "has_image": product[5],
             "seller_info": product[6]
-        }) # here we are appending all the information of products and note that it will be translated into a tabular form
+        }) # here we are appending all the information of products and note that it will be translated into a tabular form in the client side
     
     return {"message": "Product list below", "products": results}
 
@@ -575,7 +578,7 @@ def view_conversation(user_id, other_username):
             "receiver_name": receiver_name[0],
             "content": message[2],
             "message_date": message[3]
-        }) # we added the information in results and it will be shown in a tabular form for the client
+        }) # we added the information in results and it will be shown in a tabular form in the client side
 
     return {"message":"Messages found", "results": results}
 
