@@ -67,7 +67,7 @@ def login():
     response = send_request(command) # we send the request, herethe server will see that the action is "login"
 
     if "Login successful" in response.get("message"): # remember that in the server code, we send responses in this format: return {message : something} (e.g it could be {"messages": "request completed"} or "not completed") so we check what message we received and according to that the client will tell the user if his request was completed or not and so on so forth
-        authenticated = True
+        authenticated = True # we keep track of it for later use (in the while loop which shows the different option) --> the user can view products, add products and all these action only if he is logged in so that's why we keep track of it
         current_user = username  # we store the username here for later use 
         print(response.get("message"))
         print("Welcome back!\nList of available prodcuts below: \n")
@@ -327,7 +327,7 @@ while True:
         choice = input("Enter your choice (Pick a number 1-3): ")
 
         if choice == "1":
-            register()
+            register() # it calls the function above
         elif choice == "2":
             login()
         elif choice == "3":
@@ -335,7 +335,7 @@ while True:
             break
         else:
             print("Invalid choice. Please try again.")
-    if authenticated: # if he has loged in
+    if authenticated: # if he has loged in, we give the other options
         print(f"\n{current_user} - Options (Pick a number 1-12):")
         print("1. Add Product")
         print("2. View Products")
@@ -351,7 +351,7 @@ while True:
         print("12. Logout")
 
         choice = input("Enter your choice: ")
-
+        # for each choice, we callt the function of the client side and then the user will be prompted to give inputs and so on so forth (more detailed above)
         if choice == "1":
             add_product()
         elif choice == "2":
@@ -381,4 +381,4 @@ while True:
         else:
             print("Invalid choice. Please try again.")
 
-client_socket.close()
+client_socket.close() # we close the client socket at the end
