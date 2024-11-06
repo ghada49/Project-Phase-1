@@ -56,7 +56,7 @@ AUBoutique
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
-            server.login(sender_email, sender_password) # we authenticate with out server mail 
+            server.login(sender_email, sender_password) # we authenticate with our server mail 
             server.send_message(msg) # we send the message
         print("Email sent successfully")
     except Exception as e:
@@ -131,7 +131,7 @@ def handle_client(client_socket, addr):
             elif command == "VIEW_MY_LISTINGS" and authenticated_user:
                 response = view_my_listings(authenticated_user[0])
                 client_socket.send(json.dumps(response).encode('utf-8'))
-            # Command to view the users who registered in the AUBoutique
+            # Command to view the users who registered in the AUBoutique in order to check their status (if online or offline)
             elif command == "VIEW_USERS" and authenticated_user:
                 response = view_users()
                 client_socket.send(json.dumps(response).encode('utf-8'))
@@ -139,21 +139,21 @@ def handle_client(client_socket, addr):
             elif command == "VIEW_TRANSACTIONS" and authenticated_user:
                 response = view_transactions(authenticated_user[0])
                 client_socket.send(json.dumps(response).encode('utf-8'))
-            #View the image of the product the user want to see
+            #View the image of the product the user wants to see
             elif command == "VIEW_IMAGE" and authenticated_user: 
                 product_id = data.get("product_id")
                 (response,image_data) = view_product_image(product_id)
                 client_socket.send(json.dumps(response).encode('utf-8'))
                 if "Data sent" in response["message"]:
 
-                    client_socket.sendall(len(image_data).to_bytes(4, 'big'))
-                    client_socket.sendall(image_data)
-            # Command to cancel a listing
+                    client_socket.sendall(len(image_data).to_bytes(4, 'big')) #sending the size of the image to the client to know what to expect
+                    client_socket.sendall(image_data) #sending the bytes of the data of the image
+            # Command to cancel a listing of the current user if he wants to
             elif command == "CANCEL_LISTING" and authenticated_user:
                 product_id = data.get("product_id")
                 response = cancel_listing(authenticated_user[0], product_id)
                 client_socket.send(json.dumps(response).encode('utf-8'))
-            # Command to logout
+            # Command to logout, we remove the user from being online 
             elif command == "LOGOUT" and authenticated_user:
                 user_id = authenticated_user[0]
                 cursor.execute("UPDATE Users SET status = 'Offline' WHERE user_id = ?", (user_id,))
