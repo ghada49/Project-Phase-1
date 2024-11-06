@@ -23,10 +23,10 @@ online_users = {}
 def send_email(recipient, productList, pickup_info):
     smtp_server = 'smtp.gmail.com'
     smtp_port = 587
-    sender_email = 'aub.boutique1@gmail.com'
+    sender_email = 'aub.boutique1@gmail.com' # this is the sender mail 
     sender_password = 'ljrb uhpe zbdr rcdb'
     
-    products_formatted = ""
+    products_formatted = "" # we compute the list of product bought into a string
     for i in range(len(productList)):
         products_formatted += str(i+1)+") "+productList[i] +'\n'
     subject = "Purchase Confirmation"
@@ -46,7 +46,7 @@ Best regards,
 AUBoutique  
 
 """
-
+# Here we are setting : the receiver mail, the subject and the content
     msg = EmailMessage()
     msg.set_content(body)
     msg['Subject'] = subject
@@ -56,8 +56,8 @@ AUBoutique
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
-            server.login(sender_email, sender_password)
-            server.send_message(msg)
+            server.login(sender_email, sender_password) # we authenticate with out server mail 
+            server.send_message(msg) # we send the message
         print("Email sent successfully")
     except Exception as e:
         print(f"Failed to send email: {e}")
@@ -127,19 +127,19 @@ def handle_client(client_socket, addr):
             elif command == "SEARCH_PRODUCTS_BY_SELLER" and authenticated_user:
                 response = search_products_by_seller(data.get("seller_username"))
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            # Command to view the listing of the seller (products that he added that were sold or not)
             elif command == "VIEW_MY_LISTINGS" and authenticated_user:
                 response = view_my_listings(authenticated_user[0])
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            # Command to view the users who registered in the AUBoutique
             elif command == "VIEW_USERS" and authenticated_user:
                 response = view_users()
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            #Command to view the transactions (what we bought or sold)
             elif command == "VIEW_TRANSACTIONS" and authenticated_user:
                 response = view_transactions(authenticated_user[0])
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            #View the image of the product the user want to see
             elif command == "VIEW_IMAGE" and authenticated_user: 
                 product_id = data.get("product_id")
                 (response,image_data) = view_product_image(product_id)
@@ -148,12 +148,12 @@ def handle_client(client_socket, addr):
 
                     client_socket.sendall(len(image_data).to_bytes(4, 'big'))
                     client_socket.sendall(image_data)
-
+            # Command to cancel a listing
             elif command == "CANCEL_LISTING" and authenticated_user:
                 product_id = data.get("product_id")
                 response = cancel_listing(authenticated_user[0], product_id)
                 client_socket.send(json.dumps(response).encode('utf-8'))
-
+            # Command to logout
             elif command == "LOGOUT" and authenticated_user:
                 user_id = authenticated_user[0]
                 cursor.execute("UPDATE Users SET status = 'Offline' WHERE user_id = ?", (user_id,))
@@ -174,47 +174,53 @@ def handle_client(client_socket, addr):
             online_users.pop(user_id, None)
         client_socket.close()
 
+# start_server() function sets up a server that listens to multiple clients at the same time
+
 def start_server():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((HOST, PORT))
-    server.listen()
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # first, we are creating a new socket
+    server.bind((HOST, PORT)) #binding it to the host and port
+    server.listen() # the server listens for new connections 
     print(f"[LISTENING] Server is listening on {HOST}:{PORT}")
 
-    while True:
-        client_socket, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(client_socket, addr))
-        thread.start()
+    while True: # so here, we have a "while true" which allows the server to continually accept new clients
+        client_socket, addr = server.accept() #accepting connections
+        thread = threading.Thread(target=handle_client, args=(client_socket, addr)) # new thread for each client
+        thread.start() # we start the thread
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
+# the register_user is used to create a new "account" in AUBoutique with the name, email, username, password provided from the client side
 def register_user(name, email, username, password):
     with db_lock:
         try:
             cursor.execute(
                 "INSERT INTO Users (name, email, username, password, status) VALUES (?, ?, ?, ?, 'Offline')",
                 (name, email, username, password)
-            )
+            ) # we insert the fields mentionned above into the database so we have the account created and the user can log in with no problem
             conn.commit()
             return {"message": "Registration successful."}
         except sqlite3.IntegrityError:
-            return {"message": "Username or email already exists."}
-
+            return {"message": "Username or email already exists."} # if username or email is already in the database for another account an error is thrown and the user will have to register again
+            
+# the login_user helps to user to login. From client side, the user provides username and the password and send it to the server. When received, the server will make sure if these fields are in the database and if so, the user can login
 def login_user(username, password):
     cursor.execute(
         "SELECT * FROM Users WHERE username = ? AND password = ?", (username, password)
-    )
+    ) # so here we are searching for these credentials in the database to see if that account exists
     user = cursor.fetchone()
-    if user:
+    if user: # if it does exist, then:
         cursor.execute(
             "UPDATE Users SET status = 'Online' WHERE username = ?", (username,)
-        )
+        ) # we set the user status to "Online" corresponding to the username of the user. Note that this is for the messaging option (we keep track of who is online and who is not when messaging)
         conn.commit()
         return {"message": "Login successful. Welcome to AUBoutique!"}, user
-    return {"message": "Invalid credentials."}, None
+    return {"message": "Invalid credentials."}, None # we print an error if the credentials are wrong
 
+
+# The add_product() function takes the inputs (product name, description, price and image path) of the user from the client side and then add them into the database to create a new product. The username of the one who added the product will be added as well.
 def add_product(user_id, product_name, description, price, image_path=None):
     image_data = None
 
-    if image_path:
+    if image_path: # here we are checking if we are able to open the image and checking that the image path is valid
         try:
             with open(image_path, 'rb') as file:
                 image_data = file.read()
@@ -224,7 +230,7 @@ def add_product(user_id, product_name, description, price, image_path=None):
     cursor.execute("""
         INSERT INTO Products (user_id, product_name, description, price, status, image)
         VALUES (?, ?, ?, ?, 'Available', ?)
-    """, (user_id, product_name, description, float(price), image_data))
+    """, (user_id, product_name, description, float(price), image_data)) # as mentionned above, we are adding the characteristics mentioned above and we also have accounted an availibilty variable in the database to put if the product is available
     conn.commit()
     return {"message": "Product added successfully."}
 
