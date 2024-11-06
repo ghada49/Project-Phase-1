@@ -238,7 +238,7 @@ def add_product(user_id, product_name, description, price, image_path=None):
 def view_products(user_id):
     cursor.execute("""
         SELECT 
-            Products.product_id,
+            Products.product_id, # Notice how here it is "Products.something" because we want to select all the products not only a specific one
             Products.product_name,
             Products.price,
             SUBSTR(Products.description, 1, 20) AS short_description,
@@ -251,12 +251,12 @@ def view_products(user_id):
             Users AS Seller ON Products.user_id = Seller.user_id
         WHERE 
             Products.user_id != ? 
-            AND Products.status = 'Available'
-    """, (user_id,))
+            AND Products.status = 'Available' # we only select available product 
+    """, (user_id,)) #  here we are selecting all the products from the database
 
     products = cursor.fetchall()
 
-    if not products:
+    if not products: # if no products
         return {"message": "No available products found."}
 
     results = []
@@ -269,11 +269,12 @@ def view_products(user_id):
             "status": product[4],
             "has_image": product[5],
             "seller_info": product[6]
-        })
-
+        }) # here we are appending all the information of products and note that it will be translated into a tabular form
+    
     return {"message": "Product list below", "products": results}
 
-def search_products_by_seller(seller_username):
+#search_products_byseller has the same logic as view product except that we get from the user a specific seller (username) and view his product
+def search_products_by_seller(seller_username): 
     cursor.execute("""
         SELECT 
             Products.product_id,
@@ -286,9 +287,9 @@ def search_products_by_seller(seller_username):
         FROM 
             Products
         JOIN 
-            Users AS Seller ON Products.user_id = Seller.user_id
+            Users AS Seller ON Products.user_id = Seller.user_id 
         WHERE 
-            Seller.username = ?
+            Seller.username = ? # note that here  we check the products of our wanted seller
     """, (seller_username,))
     
     products = cursor.fetchall()
@@ -297,7 +298,7 @@ def search_products_by_seller(seller_username):
         return {"message": f"No products found for seller '{seller_username}'."}
 
     results = []
-    for product in products:
+    for product in products: #same as before
         results.append({
             "product_id": product[0],
             "product_name": product[1],
@@ -310,50 +311,50 @@ def search_products_by_seller(seller_username):
 
     return {"message":f"Products for seller '{seller_username}'." ,"products": results}
 
-
+#The purchase function helps the user to select many products at the same time and purchase them
 def purchase_product(buyer_id, product_ids):
     cursor.execute("SELECT email FROM Users WHERE user_id = ?", (buyer_id,))
     email_result = cursor.fetchone()
     
     emailToSend = email_result[0]  
 
-    productNames = []
-    for product_id in product_ids:
+    productNames = [] 
+    for product_id in product_ids: # remember, product_ids is the list of ID of the products that we sent from the client side, so this list has the IDs of the products that the user wants
         cursor.execute(
             "SELECT product_name, status, user_id FROM Products WHERE product_id = ?", (product_id,)
         )
-        product = cursor.fetchone()
+        product = cursor.fetchone() #we fetch to obtain the product
 
-        if product:
+        if product: #if product is here
             product_name, status, seller_id = product  
-            if seller_id == buyer_id:
+            if seller_id == buyer_id: # a user is not allowed to buy his own product
                 return {"message": "You cannot purchase your own product."}
             elif status == "Available":
                 cursor.execute(
                     "UPDATE Products SET status = 'Sold' WHERE product_id = ?", (product_id,)
-                )
+                ) # Here we update from available to Sold since the product is bought
 
-                transaction_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                transaction_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') # the transaction time is set at this instant
                 cursor.execute(
                     "INSERT INTO Transactions (buyer_id, product_id, transaction_date) VALUES (?, ?, ?)",
                     (buyer_id, product_id, transaction_date)
-                )
+                ) # we add the transaction fields (buyer_id, product_id, transaction_date) into the table
 
                 conn.commit()
-                productNames.append(product_name)  
+                productNames.append(product_name) # for each product we keep track of the name of the product and add it to our list which is an argument for the send email function since when sending a mail to the buyer we are also naming the products he bought  
 
         else:
-            return {"message": f"Product ID {product_id} does not exist."}
+            return {"message": f"Product ID {product_id} does not exist."} 
     
     if productNames:
         collection_date = (datetime.now() + timedelta(days=3)).strftime('%Y-%m-%d')
-        send_email(emailToSend, productNames, collection_date)
+        send_email(emailToSend, productNames, collection_date) # here we send an email
         
         return {"message": f"Purchase successful! Please collect your product(s) from the AUB post office on {collection_date} between 9:00 am and 4:00 pm."}
     else :
         return {"message": f"No products selected"}
 
-
+# The view_users functions show all the users that have an AUBoutique account
 def view_users():
     cursor.execute("""
         SELECT 
@@ -369,7 +370,7 @@ def view_users():
         GROUP BY 
             Users.user_id
     """)
-    users = cursor.fetchall()
+    users = cursor.fetchall() # here it gets all the data from the USERS database and give it to the client
 
     if not users:
         return {"message": "No users found."}
@@ -382,10 +383,10 @@ def view_users():
             "products_added": user[2],
             "products_sold": user[3],
             "products_purchased": user[4]
-        })
+        }) # we can see all these fields of the user
 
     return {"message": "Users: ","users": results}
-
+# view listing permits the user (seller) to see what products he sold or not
 def view_my_listings(user_id):
     cursor.execute("""
         SELECT 
@@ -399,7 +400,7 @@ def view_my_listings(user_id):
             Products
         WHERE 
             Products.user_id = ?
-    """, (user_id,))
+    """, (user_id,)) # here we are selecting those products that he has added 
 
     products = cursor.fetchall()
 
@@ -415,10 +416,11 @@ def view_my_listings(user_id):
             "short_description": product[3],
             "status": product[4],
             "has_image": product[5]
-        })
+        }) # and here is the information shown to the client side to the seller
 
     return {"message": "These are your listing: ","products": results}
 
+# view transactions helps the user seller or buyer to see what he bought or sold and more details on that
 def view_transactions(user_id):
     cursor.execute("""
         SELECT 
@@ -437,7 +439,7 @@ def view_transactions(user_id):
         ORDER BY 
             Transactions.transaction_date DESC
     """, (user_id,))
-    sold_transactions = cursor.fetchall()
+    sold_transactions = cursor.fetchall() # here we are getting all the sold products 
 
     if not sold_transactions:
         sold_message ="No products sold."
@@ -460,7 +462,7 @@ def view_transactions(user_id):
             Transactions.buyer_id = ?
         ORDER BY 
             Transactions.transaction_date DESC
-    """, (user_id,))
+    """, (user_id,)) #Here all the bought products
     bought_transactions = cursor.fetchall()
     if not bought_transactions:
         bought_message ="No products bought."
@@ -490,20 +492,21 @@ def view_transactions(user_id):
         "bought_transactions": bought_results
     }
 
+# view product image sents the data of the photo to the client so that it can open the picture and show it to the user
 def view_product_image(product_id):
     cursor.execute("SELECT image FROM Products WHERE product_id = ?", (product_id,))
-    result = cursor.fetchone()
+    result = cursor.fetchone() # we get the data necessary to open the image
 
-    if not result or not result[0]:
+    if not result or not result[0]: # if no data
         return {"message":"No image data"}  
 
     image_data = result[0]
-    return ({"message":"Data sent"},image_data)
+    return ({"message":"Data sent"},image_data)# we send the data 
 
-
+# send message uses the receiver username enter by the user on the client side along with the content and send it to the receiver
 def send_message(sender_id, receiver_username, content):
-    message_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute("SELECT user_id FROM Users WHERE username = ?", (receiver_username,))
+    message_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') # we take account of the data of the sent message
+    cursor.execute("SELECT user_id FROM Users WHERE username = ?", (receiver_username,)) # we select he user Id of the username (receiver)
     receiver = cursor.fetchone()
 
     if receiver:
@@ -511,17 +514,18 @@ def send_message(sender_id, receiver_username, content):
         cursor.execute(
             "INSERT INTO Messages (sender_id, receiver_id, content, message_date) VALUES (?, ?, ?, ?)",
             (sender_id, receiver_id, content, message_date)
-        )
+        ) # we insert the message and the other fields into the database and to view the message received, the receiver will user the view messages function that takes these informations from the Messages table
         conn.commit()
         return {"message": "Message sent."}
     return {"message": "User not found."}
 
+# send_message_online is a similar function except that here we check if the user we want to talk to is online or not and then we make the decision to send messages or not
 def send_message_online(sender_id, receiver_username, content):
     message_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute("SELECT user_id FROM Users WHERE username = ? AND status=? ", (receiver_username,'Online'))
-    receiver = cursor.fetchone()
+    cursor.execute("SELECT user_id FROM Users WHERE username = ? AND status=? ", (receiver_username,'Online')) # as you can see, in the tuple, we have put "Online" to see if the user is online or not
+    receiver = cursor.fetchone() # note that here we will get an answer if the username exists AND the user is online
 
-    if receiver:
+    if receiver: # if both then no problem
         receiver_id = receiver[0]
         cursor.execute(
             "INSERT INTO Messages (sender_id, receiver_id, content, message_date) VALUES (?, ?, ?, ?)",
@@ -529,10 +533,11 @@ def send_message_online(sender_id, receiver_username, content):
         )
         conn.commit()
         return {"message": "Message sent."}
-    return {"message": "User not found or not online."}
+    return {"message": "User not found or not online."} # else here the username does not exists or the user is not online
 
+# viewing conversation takes the username of another user and gives all the messages that were sent between the other user and the user that is requesting this
 def view_conversation(user_id, other_username):
-    cursor.execute("SELECT user_id FROM Users WHERE username = ?", (other_username,))
+    cursor.execute("SELECT user_id FROM Users WHERE username = ?", (other_username,)) # here we select the ID of the other user from the user table because in the Messages table it is the user ID that is used as variable
     other_user = cursor.fetchone()
 
     if not other_user:
@@ -541,7 +546,7 @@ def view_conversation(user_id, other_username):
     other_user_id = other_user[0]
     cursor.execute("""
         SELECT 
-            sender_id, 
+            sender_id,  # as you see we are selecting these information here 
             receiver_id, 
             content, 
             message_date 
@@ -549,7 +554,7 @@ def view_conversation(user_id, other_username):
             Messages 
         WHERE 
             (sender_id = ? AND receiver_id = ?) OR 
-            (sender_id = ? AND receiver_id = ?)
+            (sender_id = ? AND receiver_id = ?) # here we see both sent or received messages between the user
         ORDER BY 
             message_date ASC
     """, (user_id, other_user_id, other_user_id, user_id))
@@ -570,10 +575,11 @@ def view_conversation(user_id, other_username):
             "receiver_name": receiver_name[0],
             "content": message[2],
             "message_date": message[3]
-        })
+        }) # we added the information in results and it will be shown in a tabular form for the client
 
     return {"message":"Messages found", "results": results}
 
+# view messages received allows the user to see who sent him any messages, so it is like inbox
 def view_all_messages_received(user_id):
     cursor.execute("""
         SELECT 
@@ -586,14 +592,14 @@ def view_all_messages_received(user_id):
         JOIN 
             Users sender ON m.sender_id = sender.user_id
         WHERE 
-            m.receiver_id = ? 
+            m.receiver_id = ? # so here the receiver is the user himself
         ORDER BY 
             m.message_date ASC
-    """, (user_id,))  
+    """, (user_id,))  # so here we select all the messages received by the user 
     
     messages = cursor.fetchall()
 
-    if not messages:
+    if not messages: # if no messages
         return {"message": "No messages found."}
 
     results = []
@@ -602,7 +608,7 @@ def view_all_messages_received(user_id):
             "sender_username": message[1],
             "content": message[2],
             "message_date": message[3]
-        })
+        }) # again as before, we store the information in results 
 
     return {"message": "Messages found", "results": results}
 
