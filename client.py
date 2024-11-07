@@ -318,7 +318,7 @@ def cancel_listing():
 
     print(send_request(command).get("message")) # send request
 
-''' 
+
 def logout():
     print("Logging out...")
     command = {
@@ -330,7 +330,7 @@ def logout():
 
 print("\nWelcome to AUBoutique Platform!\n")
 authenticated = False
-'''
+
 
 # so here we give the users the option to first register, login, exit. Then when they login, we give them the other options.
 while True:
@@ -393,7 +393,7 @@ while True:
         elif choice == "12":
             authenticated = False
             current_user = None
-            print("bye")
+            logout()
         else:
             print("Invalid choice. Please try again.")
 
