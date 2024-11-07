@@ -195,11 +195,13 @@ def register_user(name, email, username, password):
             cursor.execute(
                 "INSERT INTO Users (name, email, username, password, status) VALUES (?, ?, ?, ?, 'Offline')",
                 (name, email, username, password)
-            ) # we insert the fields mentionned above into the database so we have the account created and the user can log in with no problem
+            ) 
+            # we insert the fields mentionned above into the database so we have the account created and the user can log in with no problem
             conn.commit()
             return {"message": "Registration successful."}
         except sqlite3.IntegrityError:
-            return {"message": "Username or email already exists."} # if username or email is already in the database for another account an error is thrown and the user will have to register again
+            return {"message": "Username or email already exists."} 
+            # if username or email is already in the database for another account an error is thrown and the user will have to register again
             
 # the login_user helps to user to login. From client side, the user provides username and the password and send it to the server. When received, the server will make sure if these fields are in the database and if so, the user can login
 def login_user(username, password):
@@ -210,10 +212,12 @@ def login_user(username, password):
     if user: # if it does exist, then:
         cursor.execute(
             "UPDATE Users SET status = 'Online' WHERE username = ?", (username,)
-        ) # we set the user status to "Online" corresponding to the username of the user. Note that this is for the messaging option (we keep track of who is online and who is not when messaging)
+        ) 
+        # we set the user status to "Online" corresponding to the username of the user. Note that this is for the messaging option (we keep track of who is online and who is not when messaging)
         conn.commit()
         return {"message": "Login successful. Welcome to AUBoutique!"}, user
-    return {"message": "Invalid credentials."}, None # we will send a message saying credentials are wrong
+    return {"message": "Invalid credentials."}, None 
+    # we will send a message saying credentials are wrong
 # Note :
 # in the server code, we send responses in this format: return {message : something}; when the client receive the message he will check the content at accordingly he will print, or prompt the user and so on so forth
 # for example here : for invalid credentials: it will print it and the user will have to login again, so here it check what is the content of message and will act accordingly
@@ -233,15 +237,17 @@ def add_product(user_id, product_name, description, price, image_path=None):
     cursor.execute("""
         INSERT INTO Products (user_id, product_name, description, price, status, image)
         VALUES (?, ?, ?, ?, 'Available', ?)
-    """, (user_id, product_name, description, float(price), image_data)) # as mentionned above, we are adding the characteristics mentioned above and we also have accounted an availibilty variable in the database to put if the product is available
+    """, (user_id, product_name, description, float(price), image_data))
+    # as mentionned above, we are adding the characteristics mentioned above and we also have accounted an availibilty variable in the database to put if the product is available
     conn.commit()
     return {"message": "Product added successfully."}
 
 # The view_products function shows all the products available 
 def view_products(user_id):
+    # Notice how here it is "Products.something" because we want to select all the products not only a specific one
     cursor.execute("""
         SELECT 
-            Products.product_id, # Notice how here it is "Products.something" because we want to select all the products not only a specific one
+            Products.product_id, 
             Products.product_name,
             Products.price,
             SUBSTR(Products.description, 1, 20) AS short_description,
@@ -255,7 +261,8 @@ def view_products(user_id):
         WHERE 
             Products.user_id != ? 
             AND Products.status = 'Available' # we only select available product 
-    """, (user_id,)) #  here we are selecting all the products from the database
+    """, (user_id,)) 
+    #  here we are selecting all the products from the database
 
     products = cursor.fetchall()
 
@@ -272,7 +279,8 @@ def view_products(user_id):
             "status": product[4],
             "has_image": product[5],
             "seller_info": product[6]
-        }) # here we are appending all the information of products and note that it will be translated into a tabular form in the client side
+        })
+        # here we are appending all the information of products and note that it will be translated into a tabular form in the client side
     
     return {"message": "Product list below", "products": results}
 
@@ -292,8 +300,8 @@ def search_products_by_seller(seller_username):
         JOIN 
             Users AS Seller ON Products.user_id = Seller.user_id 
         WHERE 
-            Seller.username = ? # note that here  we check the products of our wanted seller
-    """, (seller_username,))
+            Seller.username = ? 
+    """, (seller_username,)) # note that here  we check the products of our wanted seller
     
     products = cursor.fetchall()
 
@@ -335,13 +343,14 @@ def purchase_product(buyer_id, product_ids):
             elif status == "Available":
                 cursor.execute(
                     "UPDATE Products SET status = 'Sold' WHERE product_id = ?", (product_id,)
-                ) # Here we update from available to Sold since the product is bought
+                ) 
+                # Here we update from available to Sold since the product is bought
 
                 transaction_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') # the transaction time is set at this instant
                 cursor.execute(
                     "INSERT INTO Transactions (buyer_id, product_id, transaction_date) VALUES (?, ?, ?)",
                     (buyer_id, product_id, transaction_date)
-                ) # we add the transaction fields (buyer_id, product_id, transaction_date) into the table
+                ) # we add the transaction fields (buyer_id, product_id, transaction_date) into the table TRANSACTIONS
 
                 conn.commit()
                 productNames.append(product_name) # for each product we keep track of the name of the product and add it to our list which is an argument for the send email function since when sending a mail to the buyer we are also naming the products he bought  
@@ -549,7 +558,7 @@ def view_conversation(user_id, other_username):
     other_user_id = other_user[0]
     cursor.execute("""
         SELECT 
-            sender_id,  # as you see we are selecting these information here 
+            sender_id,  
             receiver_id, 
             content, 
             message_date 
@@ -557,11 +566,11 @@ def view_conversation(user_id, other_username):
             Messages 
         WHERE 
             (sender_id = ? AND receiver_id = ?) OR 
-            (sender_id = ? AND receiver_id = ?) # here we see both sent or received messages between the user
+            (sender_id = ? AND receiver_id = ?) 
         ORDER BY 
             message_date ASC
     """, (user_id, other_user_id, other_user_id, user_id))
-
+# here we see both sent or received messages between the user
     messages = cursor.fetchall()
 
     if not messages:
