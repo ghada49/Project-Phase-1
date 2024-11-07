@@ -56,17 +56,18 @@ def login():
     username = input("Enter your username: ") # user input
     password = input("Enter your password: ")
 
-    command = { # we store the data
+    command = {
         "action": "LOGIN",
         
             "username": username,
             "password": password
         
-    }
+    }  # we store the data
 
     response = send_request(command) # we send the request, here the server will see that the action is "login"
 
-    if "Login successful" in response.get("message"): # remember that in the server code, we send responses in this format: return {message : something} (e.g it could be {"messages": "request completed"} or "not completed") so we check what message we received and according to that the client will tell the user if his request was completed or not and so on so forth
+    if "Login successful" in response.get("message"): # remember that in the server code, we send responses in this format: return {message : something} 
+        #(e.g it could be {"messages": "request completed"} or "not completed") so we check what message we received and according to that the client will tell the user if his request was completed or not and so on so forth
         authenticated = True # we keep track of it for later use (in the while loop which shows the different option) --> the user can view products, add products and all these action only if he is logged in so that's why we keep track of it
         current_user = username  # we store the username here for later use 
         print(response.get("message"))
@@ -95,14 +96,14 @@ def add_product():
     price = input("Enter product price: ")
     image_path = input("Enter image file path (leave blank if none): ").strip() #the seller has the option to add an image or not
 
-    command = { # we store the data in command
+    command = { 
         "action": "ADD_PRODUCT",
             "product_name": product_name,
             "description": description,
             "price": price,
             "image_path": image_path if image_path else None # image path is set to None if the user has not entered anything
         
-    }
+    } # we store the data in command
     
     response = send_request(command) #we send the request and get the response back from the server
     print(response.get("message")) 
@@ -155,8 +156,8 @@ def purchase_product():
     
     command = {
         "action": "PURCHASE",
-        "product_id": product_ids # we send the list with the product IDS and the server from his side will loop over each product ID and do the necessary changes in the databases
-    }
+        "product_id": product_ids
+    }  # we send the list with the product IDS and the server from his side will loop over each product ID and do the necessary changes in the databases
     response = send_request(command)
     print(response.get("message"))
 
@@ -172,9 +173,9 @@ def send_message():
     choice = input("Enter your choice (1 or 2): ")
     receiver_username = input("Enter the username of the receiver: ")    
     message_content = input("Enter your message: ")
-    if choice == "2":
+    if choice == "2": # two different requests
         command = {
-            "action": "SEND_MESSAGE", # two different requests
+            "action": "SEND_MESSAGE", 
             
                 "receiver_username": receiver_username,
                 "message_content": message_content
@@ -182,7 +183,7 @@ def send_message():
         }
     else:
         command = {
-            "action": "SEND_MESSAGE_ONLINE", # two different requests
+            "action": "SEND_MESSAGE_ONLINE", 
             
                 "receiver_username": receiver_username,
                 "message_content": message_content
@@ -193,7 +194,7 @@ def send_message():
     print(send_request(command).get("message"))
 
 
-# to view the conversations with another user, the user have to input username of this other person
+# to view the conversations with another user, the user have to give as input the username of this other person
 def view_conversations():
     print("\n--- View Conversations ---")
     other_username = input("Enter the username of the person to view conversations: ") # so here is the input which has the username of the other person
@@ -328,8 +329,8 @@ while True:
 
         choice = input("Enter your choice (Pick a number 1-3): ")
 
-        if choice == "1":
-            register() # it calls the function above
+        if choice == "1": # it calls the function above 
+            register() 
         elif choice == "2":
             login()
         elif choice == "3":
