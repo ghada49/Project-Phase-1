@@ -12,6 +12,7 @@ To run the code make sure that you install those libraries :
           pip install smtplib  
           pip install io
           pip install tabulate
+
   But again, in principle, those are built in and no need to install them. Please, first, try to run the code without them and if does not work, download the missing library.
 
 
@@ -98,6 +99,8 @@ Then, it will show him the image after he enters the ID of the product.
 
 View and Cancel listing: View listing allows the current user to check all listings (products) he has added so far to check what has been sold (or is still available). 
 Cancel listing allows the client (seller) to remove a listing (product) he has already added to the marketplace (if they want to remove it) 
+
+At the end, when you finish everything, you can logout and then exit.
 
 
 
