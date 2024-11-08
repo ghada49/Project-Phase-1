@@ -18,9 +18,7 @@ To run the code make sure that you install those libraries :
 
   HOW TO RUN THE CODE:
 
-  Use the cd command to change directories. For example, if your file is in C:\Users\YourUsername\Documents do cd C:\Users\YourUsername\Documents
-  Then, run the server (python server.py)
-  Then open another command and do the same with the directories. Run client.py (you can open different commands to run multiple clients)
+To change directories, use the cd command. For example, if your file (containing the 3 python file server, client and database) is in C:\Users\YourUsername\Documents, type cd C:\Users\YourUsername\Documents. Run the server with python server.py, then open another Command Prompt window, navigate to the same directory, and run client.py. You can open multiple Command Prompt windows and repeat this process to run client.py for multiple clients.
 
 When you first run the client code you will have 3 options :
 1. Register
