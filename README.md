@@ -34,18 +34,18 @@ The exit will just terminate the program and close the client socket. So you do 
 
 When you login, the products available in the market will be shown in a tabular form.
 Then you will have 12 options to choose from : 
-    "1. Add Product",
-    "2. View Products",
-    "3. Purchase Product",
-    "4. Send a Message",
-    "5. Conversation History",
-    "6. View all messages received",
-    "7. View Users List",
-    "8. View Transactions",
-    "9. View Product Image",
-    "10. View My Listings",
-    "11. Cancel a Listing",
-    "12. Logout"
+   - "1. Add Product",
+   - "2. View Products",
+   - "3. Purchase Product",
+   - "4. Send a Message",
+   - "5. Conversation History",
+   - "6. View all messages received",
+   - "7. View Users List",
+   - "8. View Transactions",
+   - "9. View Product Image",
+   - "10. View My Listings",
+   - "11. Cancel a Listing",
+   - "12. Logout"
 Again here, you have to write the number corresponding to your next. So if you want to purchase product, you write 3 on the command line where the program prompts you to do it.
 
 ADD PRODUCT :
