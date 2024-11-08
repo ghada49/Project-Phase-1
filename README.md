@@ -16,9 +16,13 @@ To run the code make sure that you install those libraries :
   But again, in principle, those are built in and no need to install them. Please, first, try to run the code without them and if does not work, download the missing library.
 
 
-  HOW TO RUN THE CODE:
+   HOW TO RUN THE CODE:
+  - First make sure to create an environment using VS Code for the folder the (client.py and server.py exist)
+  - Run the database.py file in order to create the database (Boutique.db) if it is the first time and database still doesn't exist
+  -  Use the cd command to change directories. For example, if your file is in C:\Users\YourUsername\Documents do cd C:\Users\YourUsername\Documents
+  -  Then, run the server (python server.py)
+  -  Then open another command and do the same with the directories. Run client.py (you can open different commands to run multiple clients)
 
-To change directories, use the cd command. For example, if your file (containing the 3 python file server, client and database) is in C:\Users\YourUsername\Documents, type cd C:\Users\YourUsername\Documents. Run the server with python server.py, then open another Command Prompt window, navigate to the same directory, and run client.py. You can open multiple Command Prompt windows and repeat this process to run client.py for multiple clients.
 
 When you first run the client code you will have 3 options :
 1. Register
@@ -51,7 +55,7 @@ Again here, you have to write the number corresponding to your next. So if you w
 
 ADD PRODUCT :
 If you choose add product, you will be prompted to write the name of your product, a description of your product (small description no more than 20 characters), the price (don't write units next to the price, it is in dollars by default) and a path to your image of the product if you have one. Note that you should not put "" when entering the file so "C\Desktop\image.jpg" will give an error for example, you have to write it without the "".
-So as I said, you just need to input those values in the command line
+So you just need to input those values in the command line
 
 VIEW PRODUCT :
 It will prompt you to either view all products from all seller (Option 1) or products of 1 seller (Option 2)
