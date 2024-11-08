@@ -46,6 +46,7 @@ Then you will have 12 options to choose from :
    - "10. View My Listings",
    - "11. Cancel a Listing",
    - "12. Logout"
+
 Again here, you have to write the number corresponding to your next. So if you want to purchase product, you write 3 on the command line where the program prompts you to do it.
 
 ADD PRODUCT :
