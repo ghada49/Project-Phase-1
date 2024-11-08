@@ -2,7 +2,7 @@ LIBRARIES TO INSTALL:
 
 To run the code make sure that you install those libraries :
 - pip install pillow
-- Note that the following libraries below should be built-in in your Python so by default there is NO NEED to install them, but I will mention them here again if your version of python are do not have them and if you get an error:
+- Note that the following libraries below should be built-in in your Python so by default there is NO NEED to install them, but I will mention them here again if your version of python do not have them and if you get an error:
           pip install email  
           pip install json   
           pip install socket 
